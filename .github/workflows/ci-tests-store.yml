@@ -70,12 +70,32 @@ jobs:
           pip install -e ".[store,store-test]" -U -f ${TORCH_URL} --prefer-binary
           pip list
 
+      - name: Install pytest-rank
+        run: pip install pytest-ranking==0.2.6
+
+      - name: Restore pytest-ranking cache
+        id: restore-pytest-ranking-cache
+        if: always()
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ github.workspace }}/.pytest_cache/v/pytest_ranking_data
+          key: pytest-ranking-cache-${{ runner.os }}-${{ matrix.python }}
+
       - name: Testing Store
         working-directory: tests/tests_store
         # NOTE: do not include coverage report here, see: https://github.com/nedbat/coveragepy/issues/1003
         run: |
           python -m coverage run --source lightning \
-            -m pytest -v --timeout=60 --durations=60
+            -m pytest -vv --durations=0 --timeout=60 --durations=60\
+            --rank --rank-weight=0-1-0
+
+      - name: Save pytest-ranking cache
+        id: save-pytest-ranking-cache
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: ${{ github.workspace }}/.pytest_cache/v/pytest_ranking_data
+          key: pytest-ranking-cache-${{ runner.os }}-${{ matrix.python }}-${{ github.run_id }}
 
       - name: Statistics
         if: success()

@@ -131,17 +131,39 @@ jobs:
         if: ${{ runner.os != 'windows' }}
         # on Win, tests takes even loner then with normal single thread
         run: echo "PYTEST_XDIST_ARGS=-n auto --dist=loadfile" >> $GITHUB_ENV
+
+      - name: Install pytest-rank
+        run: pip install pytest-ranking==0.2.6
+
+      - name: Restore pytest-ranking cache
+        id: restore-pytest-ranking-cache
+        if: always()
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ github.workspace }}/.pytest_cache/v/pytest_ranking_data
+          key: pytest-ranking-cache-${{ runner.os }}-${{ matrix.python }}
+
       - name: Tests
         working-directory: ./tests
         run: |
           set -e
           python -m coverage run --source ${{ env.COVERAGE_SCOPE }} \
-            -m pytest -m "not cloud" -vvvv tests_app \
+            -m pytest -m "not cloud" -vvvv --durations=0 tests_app \
               --ignore="tests_app/components/python/test_python.py" \
-              --timeout=120 --durations=50 ${PYTEST_XDIST_ARGS}
-          pytest -m "not cloud" -v \
+              --timeout=120 --durations=50 ${PYTEST_XDIST_ARGS} \
+              --rank --rank-weight=0-1-0
+          pytest -m "not cloud" -vv --durations=0 \
             tests_app/components/python/test_python.py \
-            --timeout=120 --durations=50
+            --timeout=120 --durations=50\
+            --rank --rank-weight=0-1-0
+
+      - name: Save pytest-ranking cache
+        id: save-pytest-ranking-cache
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: ${{ github.workspace }}/.pytest_cache/v/pytest_ranking_data
+          key: pytest-ranking-cache-${{ runner.os }}-${{ matrix.python }}-${{ github.run_id }}
 
       - name: Statistics
         if: success()
