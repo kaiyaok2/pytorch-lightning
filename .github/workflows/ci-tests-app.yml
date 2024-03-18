@@ -131,18 +131,6 @@ jobs:
         if: ${{ runner.os != 'windows' }}
         # on Win, tests takes even loner then with normal single thread
         run: echo "PYTEST_XDIST_ARGS=-n auto --dist=loadfile" >> $GITHUB_ENV
-
-      - name: Install pytest-rank
-        run: pip install pytest-ranking==0.2.6
-
-      - name: Restore pytest-ranking cache
-        id: restore-pytest-ranking-cache
-        if: always()
-        uses: actions/cache/restore@v4
-        with:
-          path: ${{ github.workspace }}/.pytest_cache/v/pytest_ranking_data
-          key: pytest-ranking-cache-${{ runner.os }}-${{ matrix.python }}
-
       - name: Tests
         working-directory: ./tests
         run: |
@@ -151,17 +139,9 @@ jobs:
             -m pytest -m "not cloud" -vvvv tests_app \
               --ignore="tests_app/components/python/test_python.py" \
               --timeout=120 --durations=50 ${PYTEST_XDIST_ARGS}
-          pytest -m "not cloud" -vv \
+          pytest -m "not cloud" -v \
             tests_app/components/python/test_python.py \
             --timeout=120 --durations=50
-
-      - name: Save pytest-ranking cache
-        id: save-pytest-ranking-cache
-        if: always()
-        uses: actions/cache/save@v4
-        with:
-          path: ${{ github.workspace }}/.pytest_cache/v/pytest_ranking_data
-          key: pytest-ranking-cache-${{ runner.os }}-${{ matrix.python }}-${{ github.run_id }}
 
       - name: Statistics
         if: success()
