@@ -86,7 +86,7 @@ jobs:
         # NOTE: do not include coverage report here, see: https://github.com/nedbat/coveragepy/issues/1003
         run: |
           python -m coverage run --source lightning \
-            -m pytest -vv --durations=0 --timeout=60 --durations=60
+            -m pytest -vv --timeout=60 --durations=60
 
       - name: Save pytest-ranking cache
         id: save-pytest-ranking-cache
